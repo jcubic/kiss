@@ -1,0 +1,28 @@
+{
+    "manifest_version" : 2,
+
+    "name" : "KISS",
+    "version" : "0.1",
+
+    "description" : "LIPS debugger",
+    "author" : "Jakub T. Jankiewicz",
+    "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",
+    "devtools_page" : "html/devtools.html",
+    "background": {
+        "scripts": [
+            "js/background.js"
+        ]
+    },
+    "web_accessible_resources": ["js/script.js"],
+    "permissions": [
+        "activeTab",
+        "http://*/*",
+        "https://*/*",
+        "file:///*"
+    ],
+    "icons": {
+      "16": "img/icon16.png",
+      "48": "img/icon48.png",
+      "128": "img/icon128.png"
+    }
+}

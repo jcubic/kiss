@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="/js/jquery-3.5.0.min.js"></script>
+  <script src="/js/jquery.terminal.js"></script>
+  <script src="/js/lips.js"></script>
+  <script src="/js/terminal.js"></script>
+  <script src="/js/prism.js"></script>
+  <script src="/js/terminal-prism.js"></script>
+  <script src="/js/prism-scheme.min.js"></script>
+  <script src="/js/prism-scheme.patch.js"></script>
+  <script src="/js/requester.js"></script>
+  <script src="/js/messages.js"></script>
+  <link rel="stylesheet" href="/css/jquery.terminal.min.css"/>
+  <link rel="stylesheet" href="/css/prism.css"/>
+</head>
+<body>
+  <script type="text/x-scheme">
+    (let-env lips.env.parent
+       (load "/scm/bootstrap.scm")
+       (load "/scm/R5RS.scm")
+       (load "/scm/R7RS.scm"))
+  </script>
+  <script type="text/x-scheme">
+   ($.terminal.syntax "scheme")
+   (define term (terminal &(:selector "body" :name "demo" :lips lips)))
+   (messages.listen (lambda (req)
+      (if (string=? req.message.name "stdout")
+         (let ((stdout (term.interpreter.env.get "stdout")))
+           (--> req.message.args (forEach (lambda (arg)
+                                             (--> stdout (write arg)))))))))
+  </script>
+</body>
+</html>
