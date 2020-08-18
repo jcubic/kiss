@@ -37,11 +37,12 @@ function requester() {
     };
 }
 
+// -----------------------------------------------------------------------------
 function event(name, detail) {
     document.dispatchEvent(new CustomEvent(name, { detail }));
 }
 
-
+// -----------------------------------------------------------------------------
 document.addEventListener('lips', function(e) {
     const id = e.detail.id;
     const { type, args } = e.detail.message;
@@ -60,12 +61,16 @@ document.addEventListener('lips', function(e) {
     }
 });
 
+// -----------------------------------------------------------------------------
 document.addEventListener('back-reply', function(e) {
+    console.log({'back': e});
     req.invoke(e.detail);
 });
 
+// -----------------------------------------------------------------------------
 var req = requester();
 
+// -----------------------------------------------------------------------------
 lips.env.set('stdout', lips.OutputPort(function() {
     var args = Array.from(arguments).map(x => x.valueOf());
     if (args.length) {
@@ -74,12 +79,23 @@ lips.env.set('stdout', lips.OutputPort(function() {
         });
     }
 }));
+
+// -----------------------------------------------------------------------------
+lips.env.set('debug', function() {
+    return req.promise({name: 'debug'}, function({ id, data }) {
+        event('back-request', { id, message: data });
+    });
+});
+
+// -----------------------------------------------------------------------------
 lips.env.set('stdin', lips.InputPort(function() {
     return req.promise({name: 'stdin'}, function({ id, data }) {
+        console.log({data, id});
         event('back-request', { id, message: data });
     });
 }));
 
+// -----------------------------------------------------------------------------
 var style = (bg, radius = '') => `${radius ? 'border-radius: ' + radius + ';' : ''}padding: 2px 10px; background: ${bg}; color: white`;
 if (window.lips) {
     console.log(

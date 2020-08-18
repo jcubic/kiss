@@ -17,11 +17,21 @@ var messages = (function() {
           });
       });
   }, 400);
+  function reply(id, message) {
+      const tabId = chrome.devtools.inspectedWindow.tabId;
+      var message = {action: 'reply', tabId, id, message};
+      console.log(message);
+      port.postMessage(message);
+  }
   function listen(fn) {
       listeners.push(function(data) {
-          console.log({data});
           if (data.type === 'backward') {
-              fn(data);
+              var ret = fn(data);
+              if (ret.then) {
+                  ret.then((ret) => reply(data.id, ret.valueOf()));
+              } else {
+                  reply(data.id, ret);
+              }
           }
       });
   }

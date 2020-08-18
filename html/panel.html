@@ -21,14 +21,27 @@
        (load "/scm/R5RS.scm")
        (load "/scm/R7RS.scm"))
   </script>
+  <script type="text/plain">
+ dev tools        
++-------+
+|       | ----->
++-------+ 
+  </script>
   <script type="text/x-scheme">
    ($.terminal.syntax "scheme")
-   (define term (terminal &(:selector "body" :name "demo" :lips lips)))
+   (define term (terminal &(:selector "body" :name "kiss" :lips lips)))
    (messages.listen (lambda (req)
-      (if (string=? req.message.name "stdout")
-         (let ((stdout (term.interpreter.env.get "stdout")))
-           (--> req.message.args (forEach (lambda (arg)
-                                             (--> stdout (write arg)))))))))
+      (let ((name req.message.name))
+        (cond ((string=? name "stdout")
+               (let ((stdout (term.interpreter.env.get "stdout")))
+                  (--> req.message.args (forEach (lambda (arg)
+                                                    (--> stdout (write arg)))))))
+              ((string=? name "stdin")
+               (let ((stdin (term.interpreter.env.get "stdin")))
+                 (stdin.read)))
+              ((string=? name "debug")
+               (term.interpreter.exec "(debug)"))))))
+        
   </script>
 </body>
 </html>

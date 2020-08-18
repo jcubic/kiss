@@ -67,6 +67,16 @@ function terminal({selector, lips, dynamic = false, name = 'terminal'}, undefine
             term.error(message);
         }, lips.env.get('error').__doc__),
         // ---------------------------------------------------------------------
+        debug: doc(function() {
+            if (term.level() === 1) {
+                term.push(process(debug), {
+                    prompt: 'kiss> '
+                });
+            }
+        }, `(debug)
+        
+            Enable debug mode`),
+        // ---------------------------------------------------------------------
         // hack so (let ((x lambda)) (help x))
         '__help': lips.env.get('help')
     });
@@ -76,36 +86,48 @@ function terminal({selector, lips, dynamic = false, name = 'terminal'}, undefine
     var display = interpreter.get('display');
     var repr = interpreter.get('repr');
     var strace;
-    var term = jQuery(selector).terminal(function(code, term) {
-        // format before executing mainly for strings in function docs
-        code = new lips.Formatter(code).format();
-        return interpreter.exec(code, dynamic).then(function(ret) {
-            flush();
-            ret.forEach(function(ret) {
-                if (ret !== undefined) {
-                    display(repr(ret, true));
-                    flush();
+    function process(fn) {
+        return function(code) {
+            // format before executing mainly for strings in function docs
+            code = new lips.Formatter(code).format();
+            return fn(code, term).then(function(ret) {
+                flush();
+                ret && ret.forEach(function(ret) {
+                    if (ret !== undefined) {
+                        display(repr(ret, true));
+                        flush();
+                    }
+                });
+            }).catch(function(e) {
+                var message = e.message || e;
+                term.error(message);
+                term.echo('[[;red;]Call ][[;#fff;](stack-trace)][[;red;] to see the stack]');
+                term.echo('[[;red;]Thrown exception is in global exception variable,\nuse ' +
+                          '][[;#fff;](display exception.stack)][[;red;] to display JS stack trace]');
+                if (e.code) {
+                    strace = e.code.map((line, i) => {
+                        var prefix = `[${i+1}]: `;
+                        var formatter = new lips.Formatter(line);
+                        var output = formatter.break().format({
+                            offset: prefix.length
+                        });
+                        return prefix + output;
+                    }).join('\n');
                 }
+                window.exception = e;
             });
-        }).catch(function(e) {
-            var message = e.message || e;
-            term.error(message);
-            term.echo('[[;red;]Call ][[;#fff;](stack-trace)][[;red;] to see the stack]');
-            term.echo('[[;red;]Thrown exception is in global exception variable,\nuse ' +
-                      '][[;#fff;](display exception.stack)][[;red;] to display JS stack trace]');
-            if (e.code) {
-                strace = e.code.map((line, i) => {
-                    var prefix = `[${i+1}]: `;
-                    var formatter = new lips.Formatter(line);
-                    var output = formatter.break().format({
-                        offset: prefix.length
-                    });
-                    return prefix + output;
-                }).join('\n');
-            }
-            window.exception = e;
-        });
-    }, {
+        };
+    }
+    // -------------------------------------------------------------------------
+    function debug(code) {
+        return interpreter.exec(code, dynamic);
+    }
+    // -------------------------------------------------------------------------
+    function normal(code) {
+        return messages.send('exec', [code]);
+    }
+    // -------------------------------------------------------------------------
+    var term = jQuery(selector).terminal(process(normal), {
         name,
         prompt: 'lips> ',
         enabled: false,

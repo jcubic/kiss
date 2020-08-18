@@ -54,18 +54,21 @@ chrome.runtime.onConnect.addListener(function(port) {
         }
     }
     // backward request
-    chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+    var request_back = function(request, sender, sendResponse) {
+        console.log({backward: request});
         req.promise(request, function({data, id}) {
             port.postMessage({message: data, type: 'backward', id});
         }).then(function(response) {
             sendResponse(response);
         });
-        sendResponse();
-    });
+        //sendResponse();
+    };
+    chrome.runtime.onMessage.addListener(request_back);
     port.onMessage.addListener(devToolsListener);
 
     port.onDisconnect.addListener(function() {
          port.onMessage.removeListener(devToolsListener);
+        chrome.runtime.onMessage.removeListener(request_back);
     });
 });
 

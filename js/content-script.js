@@ -43,27 +43,33 @@ function event(name, detail) {
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     if (request.action === 'lips') {
         forward.promise(request.message, function({id}) {
-            console.log('forward ' + id);
             event('lips', {id, message: request.message});
         }).then(function(result) {
-            console.log('cm');
-            console.log(result);
             sendResponse(result);
         });
+    } else if (request.action === 'reply') {
+        console.log({reply: request, vs: 'lips'});
+        backward.invoke(request);
     }
 });
 var forward = requester();
+var backward = requester();
 
 document.addEventListener('forward-reply', function(e) {
-  console.log('invoke');
-  console.log(e.detail);
   forward.invoke(e.detail);
 });
+
 document.addEventListener('back-request', function(e) {
+
     var {id, message} = e.detail;
-    console.log({b: message});
-    chrome.runtime.sendMessage(null, message, null, function(reply) {
-        console.log({reply});
+    console.log({back_req: e.detail});
+    backward.promise(message, function({id}) {
+        console.log({send: id, message});
+        chrome.runtime.sendMessage(null, {id, message}, null, function(reply) {
+            console.log('sendMessage ret');
+        });
+    }).then(function(reply) {
+        console.log({reply, id, resolve: true});
         event('back-reply', {id, message: reply});
     });
 });
